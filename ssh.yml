@@ -1,0 +1,45 @@
+---
+- name: Harden SSH configuration
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install SSH public keys
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ item }}"
+        state: present
+      loop: "{{ ssh.public_keys }}"
+
+    - name: Enable SSH access via keys
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        search_string: PubkeyAuthentication
+        line: PubkeyAuthentication yes
+        owner: root
+        group: root
+        mode: "0644" # U:RW, G:R, O:R
+        state: present
+      when: ssh.allow_keys
+
+    - name: Disable SSH access via password
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        search_string: PasswordAuthentication
+        line: PasswordAuthentication no
+        owner: root
+        group: root
+        mode: "0644" # U:RW, G:R, O:R
+        state: present
+      when: ssh.disable_passwords
+
+    - name: Disable root login via SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        search_string: PermitRootLogin
+        line: PermitRootLogin no
+        owner: root
+        group: root
+        mode: "0644" # U:RW, G:R, O:R
+        state: present
+      when: not ssh.allow_root
