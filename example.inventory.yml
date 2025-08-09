@@ -8,6 +8,9 @@ all:
     example.starsystem.dev:
       ansible_host: example.starsystem.dev
 
+      apt:
+        packages: []
+
       ssh:
         allow_keys: true
         allow_root: false
